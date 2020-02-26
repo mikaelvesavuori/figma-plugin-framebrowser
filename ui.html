@@ -163,12 +163,14 @@
 	const BUTTON_RUN = document.querySelector("#ButtonRun");
 
 	function validateUrl(url) {
+		console.log('Validating URL:', url);
+
 		if (!url || url === null || url === "") {
 			alert("Please provide a valid URL beginning with 'http://' or 'https://'.")
 			return false;
 		}
 
-		if (!url.includes("https://")) {
+		if (!url.includes("http://") && !url.includes("https://")) {
 			alert("Don't forget the protocol! Your URL needs to start with 'http://' or 'https://'.")
 			return false;
 		}
