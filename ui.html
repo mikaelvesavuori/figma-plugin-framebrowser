@@ -1,0 +1,234 @@
+<script>
+	console.log("Thanks for using Figma FrameBrowser!");
+
+	/* SET GLOBAL VARIABLES */
+	const DEFAULT_WIDTH = 500;
+	const DEFAULT_HEIGHT = 500;
+	const IFRAME_ID = "FrameBrowser";
+</script>
+
+<style>
+	:root {
+		--color-bg: #aaaaaa;
+		--color-white: #fff;
+		--color-blue: #52b8fc;
+		--color-paleblue: #d9f0ff;
+		--color-lightgray: lightgray;
+
+		--time-short-animation: 0.25s;
+		--time-regular-animation: 1.25s;
+	}
+
+  html,
+  body {
+		font-size: 16px;
+	}
+
+  html,
+  body,
+  iframe {
+    padding: 0;
+    margin: 0;
+  }
+
+	body {
+		font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell,
+			'Open Sans', 'Helvetica Neue', sans-serif;
+		font-size: 0.75em;
+		color: var(--color-bg);
+	}
+
+	label {
+		display: block !important;
+	}
+
+	input {
+		width: 100%;
+		height: 2em;
+		display: block;
+
+		padding: 0.5em;
+		margin-bottom: 1em;
+		font-size: 0.9rem;
+	}
+
+	button {
+		width: 100%;
+		height: 3em;
+		border-width: 0.25em;
+		border-radius: 0.5em;
+		border-color: var(--color-lightgray);
+		background-color: var(--color-white);
+
+		margin: 0 0 1em 0;
+		text-decoration: none;
+		cursor: pointer;
+		text-align: center;
+		-webkit-appearance: none;
+		-moz-appearance: none;
+		transition: var(--time-short-animation);
+	}
+
+	button:hover,
+	button:focus {
+		border-color: var(--color-blue);
+		background-color: var(--color-paleblue);
+		transition: var(--time-short-animation);
+	}
+
+	button:focus {
+		outline: none;
+	}
+
+	div#ScreenInput {
+		z-index: 1;
+		position: fixed;
+		transform: translateY(0);
+		transition: var(--time-regular-animation);
+
+		box-sizing: border-box;
+		box-shadow: 0px 1em 1.5em -0.5em rgba(0,0,0,0.33);
+
+		width: 100%;
+		padding: 0.5em;
+		background-color: var(--color-white);
+	}
+
+	div#ScreenInput.DrawerActive {
+		transform: translateY(-250px);
+		transition: var(--time-regular-animation);
+	}
+
+	div#ScreenEmbed {
+		z-index: 0;
+		position: absolute;
+		top: 0;
+		left: 0;
+
+		width: 100%;
+		height: 100%;
+		background-color: var(--color-lightgray);
+	}
+
+	div#ScreenEmbed iframe {
+		opacity: 0;
+		transition: var(--time-regular-animation);
+	}
+
+	div.Input {
+		width: 33.3%;
+	}
+
+	div.Flex {
+		display: flex;
+	}
+
+	.FadeIn {
+		opacity: 1 !important;
+		transition: var(--time-regular-animation);
+	}
+
+	.FadeOut {
+		opacity: 0 !important;
+		transition: var(--time-regular-animation);
+	}
+</style>
+
+<div id="ScreenInput">
+	<label for="InputUrl">URL</label>
+	<input id="InputUrl" placeholder="https://"></input>
+
+	<div class="Flex">
+		<div class="Input">
+			<label for="InputWidth">Width</label>
+			<input id="InputWidth" type="number" placeholder="500" min="200" max="2560"></input>
+		</div>
+		<div class="Input">
+			<label for="InputHeight">Height</label>
+			<input id="InputHeight" type="number" placeholder="500" min="200" max="2560"></input>
+		</div>
+		<div class="Input">
+			<label for="InputScroll">Allow scrolling?</label>
+			<input id="InputScroll" type="checkbox" checked="true"></input>
+		</div>
+	</div>
+	<button type="submit" onclick="test()" id="ButtonRun">Run</button>
+</div>
+
+<div id="ScreenEmbed"></div>
+
+<script>
+	const SCREEN_INPUT = document.querySelector("#ScreenInput");
+	const SCREEN_EMBED = document.querySelector("#ScreenEmbed");
+	const BUTTON_RUN = document.querySelector("#ButtonRun");
+
+	function validateUrl(url) {
+		if (!url || url === null || url === "") {
+			alert("Please provide a valid URL beginning with 'http://' or 'https://'.")
+			return false;
+		}
+
+		if (!url.includes("https://")) {
+			alert("Don't forget the protocol! Your URL needs to start with 'http://' or 'https://'.")
+			return false;
+		}
+
+		return true;
+	};
+
+	async function createIframe(width = DEFAULT_WIDTH, height = DEFAULT_HEIGHT, url, allowScrolling = "yes") {
+		let iframeNode = document.createElement("iframe");
+
+		iframeNode.title = "Iframe loaded through Figma FrameBrowser";
+		iframeNode.width = width;
+		iframeNode.height = height;
+		iframeNode.src = url;
+		iframeNode.frameBorder = 0;
+		iframeNode.scrolling = allowScrolling;
+		iframeNode.allowFullscreen = true;
+		iframeNode.id = IFRAME_ID;
+
+		SCREEN_EMBED.appendChild(iframeNode);
+	}
+
+	function toggleClass(node, cssClass) {
+		if (node && cssClass) {
+			node.classList.toggle(cssClass);
+			return;
+		}
+
+		console.error("Method 'toggleClass()' is missing either 'node' or 'cssClass' arguments!");
+		alert("Method 'toggleClass()' is missing either 'node' or 'cssClass' arguments!");
+	}
+
+	BUTTON_RUN.onclick = async () => {
+		const URL = document.querySelector("#InputUrl").value;
+
+		if (validateUrl(URL)) {
+			const WIDTH = parseInt(document.querySelector("#InputWidth").value) || DEFAULT_WIDTH;
+			const HEIGHT = parseInt(document.querySelector("#InputHeight").value) || DEFAULT_HEIGHT;
+			const ALLOW_SCROLLING = (() => {
+				const VALUE = document.querySelector("#InputScroll").checked;
+
+				if (VALUE === "on" || VALUE === true) {
+					return "yes";
+				}
+
+				return "no";
+			})();
+
+			parent.postMessage({
+				pluginMessage: {
+					type: "resize",
+					width: WIDTH,
+					height: HEIGHT
+				}
+			}, "*")
+
+			await createIframe(WIDTH, HEIGHT, URL, ALLOW_SCROLLING);
+			const IFRAME = document.querySelector(`#${IFRAME_ID}`);
+			toggleClass(SCREEN_INPUT, "DrawerActive");
+			toggleClass(IFRAME, "FadeIn");
+		}
+	}
+</script>
