@@ -228,6 +228,7 @@
 		return true;
 	};
 
+	// Post message to Figma
 	function post(type, message) {
 		parent.postMessage({
 			pluginMessage: {
@@ -237,6 +238,7 @@
 		}, "*");
 	}
 
+	// Toggle settings panel being displayed
 	function openSettings() {
 		toggleClass(BUTTON_SETTINGS, "Active");
 		toggleClass(SCREEN_SETTINGS, "DrawerActive");
@@ -270,10 +272,11 @@
 			return;
 		}
 
+		// Notify of error, if we get here
 		post("notify", "Method 'toggleClass()' is missing either 'node' or 'cssClass' arguments!");
 	}
 
-	async function run() {
+	async function loadContent() {
 		const URL = INPUT.value;
 
 		if (validateUrl(URL)) {
@@ -281,13 +284,10 @@
 			const HEIGHT = parseInt(INPUT_HEIGHT.value) || DEFAULT_HEIGHT;
 			const ALLOW_SCROLLING = (INPUT_SCROLL.checked === "on" ||INPUT_SCROLL.checked === true) ? "yes" : "no";
 
-			parent.postMessage({
-				pluginMessage: {
-					type: "resize",
-					width: WIDTH,
-					height: HEIGHT + SETTINGS_BUTTON_HEIGHT
-				}
-			}, "*")
+			post("resize", {
+				width: WIDTH,
+				height: HEIGHT + SETTINGS_BUTTON_HEIGHT
+			});
 
 			await createIframe(WIDTH, HEIGHT, URL, ALLOW_SCROLLING);
 			const IFRAME = document.querySelector(`#${IFRAME_ID}`);
@@ -312,14 +312,14 @@
 	/******************/
 	/* Event handling */
 	/******************/
-	INPUT.addEventListener('keyup', e => {
+	INPUT.addEventListener('keyup', async e => {
 		if (e.key === 'Enter') {
-			run();
+			await loadContent();
 		}
 	});
 
 	BUTTON_RUN.onclick = async () => {
-		await run();
+		await loadContent();
 	}
 
 	BUTTON_CLOSE.onclick = async () => {
