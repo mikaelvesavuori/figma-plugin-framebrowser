@@ -2,8 +2,9 @@
 	console.log("Thanks for using Figma FrameBrowser!");
 
 	/* SET GLOBAL VARIABLES */
-	const DEFAULT_WIDTH = 500;
-	const DEFAULT_HEIGHT = 500;
+	const DEFAULT_WIDTH = 480;
+	const DEFAULT_HEIGHT = 640;
+	const SETTINGS_BUTTON_HEIGHT = 24;
 	const IFRAME_ID = "FrameBrowser";
 </script>
 
@@ -52,7 +53,7 @@
 		font-size: 0.9rem;
 	}
 
-	button {
+	#ScreenSettings button {
 		width: 100%;
 		height: 3em;
 		border-width: 0.25em;
@@ -76,25 +77,23 @@
 		transition: var(--time-short-animation);
 	}
 
-	button:focus {
+	#ScreenSettings button:focus {
 		outline: none;
 	}
 
-	div#ScreenInput {
+	div#ScreenSettings {
 		z-index: 1;
 		position: fixed;
 		transform: translateY(0);
 		transition: var(--time-regular-animation);
-
 		box-sizing: border-box;
-		box-shadow: 0px 1em 1.5em -0.5em rgba(0,0,0,0.33);
 
 		width: 100%;
 		padding: 0.5em;
 		background-color: var(--color-white);
 	}
 
-	div#ScreenInput.DrawerActive {
+	div#ScreenSettings.DrawerActive {
 		transform: translateY(-250px);
 		transition: var(--time-regular-animation);
 	}
@@ -102,16 +101,14 @@
 	div#ScreenEmbed {
 		z-index: 0;
 		position: absolute;
-		top: 0;
+		top: 24px;
 		left: 0;
 
 		width: 100%;
 		height: 100%;
-		background-color: var(--color-lightgray);
 	}
 
 	div#ScreenEmbed iframe {
-		opacity: 0;
 		transition: var(--time-regular-animation);
 	}
 
@@ -123,29 +120,45 @@
 		display: flex;
 	}
 
-	.FadeIn {
-		opacity: 1 !important;
+	#ButtonSettings {
+		position: fixed;
+		opacity: 0;
+    width: 100%;
+    height: 24px;
+	}
+
+	#ButtonSettings button {
+    width: 100%;
+    height: 24px;
+    font-weight: 700;
+    border:  0;
+    border-bottom: 1px solid black;
+    border-radius: 0;
+		cursor: pointer;
 		transition: var(--time-regular-animation);
 	}
 
-	.FadeOut {
-		opacity: 0 !important;
-		transition: var(--time-regular-animation);
+	#ButtonSettings.Active {
+		opacity: 1;
 	}
 </style>
 
-<div id="ScreenInput">
+<div id="ButtonSettings" class="">
+	<button type="button" onclick="openSettings()">Edit FrameBrowser settings</button>
+</div>
+
+<div id="ScreenSettings">
 	<label for="InputUrl">URL</label>
 	<input id="InputUrl" placeholder="https://"></input>
 
 	<div class="Flex">
 		<div class="Input">
 			<label for="InputWidth">Width</label>
-			<input id="InputWidth" type="number" placeholder="500" min="200" max="2560"></input>
+			<input id="InputWidth" type="number" placeholder="480" min="200" max="2560"></input>
 		</div>
 		<div class="Input">
 			<label for="InputHeight">Height</label>
-			<input id="InputHeight" type="number" placeholder="500" min="200" max="2560"></input>
+			<input id="InputHeight" type="number" placeholder="640" min="200" max="2560"></input>
 		</div>
 		<div class="Input">
 			<label for="InputScroll">Allow scrolling?</label>
@@ -158,7 +171,8 @@
 <div id="ScreenEmbed"></div>
 
 <script>
-	const SCREEN_INPUT = document.querySelector("#ScreenInput");
+	const BUTTON_SETTINGS = document.querySelector("#ButtonSettings");
+	const SCREEN_SETTINGS = document.querySelector("#ScreenSettings");
 	const SCREEN_EMBED = document.querySelector("#ScreenEmbed");
 	const BUTTON_RUN = document.querySelector("#ButtonRun");
 
@@ -166,19 +180,43 @@
 		console.log('Validating URL:', url);
 
 		if (!url || url === null || url === "") {
-			alert("Please provide a valid URL beginning with 'http://' or 'https://'.")
+			parent.postMessage({
+				pluginMessage: {
+					type: "notify",
+					message: "Please provide a valid URL beginning with 'http://' or 'https://'."
+				}
+			}, "*");
+
 			return false;
 		}
 
 		if (!url.includes("http://") && !url.includes("https://")) {
-			alert("Don't forget the protocol! Your URL needs to start with 'http://' or 'https://'.")
+			parent.postMessage({
+				pluginMessage: {
+					type: "notify",
+					message: "Don't forget the protocol! Your URL needs to start with 'http://' or 'https://'."
+				}
+			}, "*");
+
 			return false;
 		}
 
 		return true;
 	};
 
+	function openSettings() {
+		toggleClass(BUTTON_SETTINGS, "Active");
+		toggleClass(SCREEN_SETTINGS, "DrawerActive");
+	}
+
+	function destroyIframe() {
+		const PREV_IFRAME = SCREEN_EMBED.querySelector('iframe');
+		if (PREV_IFRAME) SCREEN_EMBED.querySelector('iframe').remove();
+	}
+
 	async function createIframe(width = DEFAULT_WIDTH, height = DEFAULT_HEIGHT, url, allowScrolling = "yes") {
+		destroyIframe();
+
 		let iframeNode = document.createElement("iframe");
 
 		iframeNode.title = "Iframe loaded through Figma FrameBrowser";
@@ -223,14 +261,14 @@
 				pluginMessage: {
 					type: "resize",
 					width: WIDTH,
-					height: HEIGHT
+					height: HEIGHT + SETTINGS_BUTTON_HEIGHT
 				}
 			}, "*")
 
 			await createIframe(WIDTH, HEIGHT, URL, ALLOW_SCROLLING);
 			const IFRAME = document.querySelector(`#${IFRAME_ID}`);
-			toggleClass(SCREEN_INPUT, "DrawerActive");
-			toggleClass(IFRAME, "FadeIn");
+			toggleClass(BUTTON_SETTINGS, "Active");
+			toggleClass(SCREEN_SETTINGS, "DrawerActive");
 		}
 	}
 </script>
