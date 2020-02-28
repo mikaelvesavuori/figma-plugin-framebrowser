@@ -34,12 +34,12 @@ _Opening the URL_
 ![Opening the URL](framebrowser-demo-3.jpg)
 _Opening the URL_
 
-- Change...
+- Change the URL to something else...
 
 ![Editing the URL](framebrowser-demo-4.jpg)
 _Editing the URL_
 
-- ...and go somewhere else!
+- ...and go there instead!
 
 ![New site opened](framebrowser-demo-5.jpg)
 _New site opened_
