@@ -1,11 +1,12 @@
 <script>
-	console.log("Thanks for using Figma FrameBrowser!");
+	console.log("Thanks for using FrameBrowser!");
 
 	/* SET GLOBAL VARIABLES */
 	const DEFAULT_WIDTH = 480;
 	const DEFAULT_HEIGHT = 640;
 	const SETTINGS_BUTTON_HEIGHT = 24;
 	const IFRAME_ID = "FrameBrowser";
+	let isFreshStart = true;
 </script>
 
 <style>
@@ -17,7 +18,7 @@
 		--color-lightgray: lightgray;
 
 		--time-short-animation: 0.25s;
-		--time-regular-animation: 1.25s;
+		--time-regular-animation: 0.65s;
 	}
 
   html,
@@ -56,6 +57,7 @@
 	#ScreenSettings button {
 		width: 100%;
 		height: 3em;
+
 		border-width: 0.25em;
 		border-radius: 0.5em;
 		border-color: var(--color-lightgray);
@@ -70,6 +72,10 @@
 		transition: var(--time-short-animation);
 	}
 
+	#ScreenSettings button:focus {
+		outline: none;
+	}
+
 	button:hover,
 	button:focus {
 		border-color: var(--color-blue);
@@ -77,43 +83,40 @@
 		transition: var(--time-short-animation);
 	}
 
-	#ScreenSettings button:focus {
-		outline: none;
-	}
+	#ScreenSettings {
+		width: 100%;
 
-	div#ScreenSettings {
 		z-index: 1;
 		position: fixed;
 		transform: translateY(0);
 		transition: var(--time-regular-animation);
 		box-sizing: border-box;
-
-		width: 100%;
 		padding: 0.5em;
 		background-color: var(--color-white);
 	}
 
-	div#ScreenSettings.DrawerActive {
+	#ScreenSettings.DrawerActive {
 		transform: translateY(-250px);
 		transition: var(--time-regular-animation);
 	}
 
-	div#ScreenEmbed {
+	#ScreenEmbed {
+		width: 100%;
+		height: 100%;
+
 		z-index: 0;
 		position: absolute;
 		top: 24px;
 		left: 0;
-
-		width: 100%;
-		height: 100%;
 	}
 
-	div#ScreenEmbed iframe {
+	#ScreenEmbed iframe {
 		transition: var(--time-regular-animation);
 	}
 
 	div.Input {
 		width: 33.3%;
+		float: left;
 	}
 
 	div.Flex {
@@ -121,15 +124,17 @@
 	}
 
 	#ButtonSettings {
-		position: fixed;
-		opacity: 0;
     width: 100%;
     height: 24px;
+
+		position: fixed;
+		opacity: 0;
 	}
 
 	#ButtonSettings button {
     width: 100%;
     height: 24px;
+
     font-weight: 700;
     border:  0;
     border-bottom: 1px solid black;
@@ -140,6 +145,10 @@
 
 	#ButtonSettings.Active {
 		opacity: 1;
+	}
+
+	.Hide {
+		display: none;
 	}
 </style>
 
@@ -165,44 +174,57 @@
 			<input id="InputScroll" type="checkbox" checked="true"></input>
 		</div>
 	</div>
-	<button type="submit" onclick="test()" id="ButtonRun">Run</button>
+	<div class="Input">
+		<button type="submit" id="ButtonRun">Run</button>
+	</div>
+	<div class="Input">
+		<button type="submit" id="ButtonClose" class="Hide">Close</button>
+	</div>
 </div>
 
 <div id="ScreenEmbed"></div>
 
 <script>
+	/******************/
+	/*   Selectors    */
+	/******************/
 	const BUTTON_SETTINGS = document.querySelector("#ButtonSettings");
 	const SCREEN_SETTINGS = document.querySelector("#ScreenSettings");
 	const SCREEN_EMBED = document.querySelector("#ScreenEmbed");
 	const BUTTON_RUN = document.querySelector("#ButtonRun");
+	const BUTTON_CLOSE = document.querySelector("#ButtonClose");
+	const INPUT = document.querySelector("#InputUrl");
+	const INPUT_WIDTH = document.querySelector("#InputWidth");
+	const INPUT_HEIGHT = document.querySelector("#InputHeight");
+	const INPUT_SCROLL = document.querySelector("#InputScroll");
 
+	/******************/
+	/*   Functions    */
+	/******************/
 	function validateUrl(url) {
 		console.log('Validating URL:', url);
 
 		if (!url || url === null || url === "") {
-			parent.postMessage({
-				pluginMessage: {
-					type: "notify",
-					message: "Please provide a valid URL beginning with 'http://' or 'https://'."
-				}
-			}, "*");
-
+			post("notify", "Please provide a valid URL beginning with 'http://' or 'https://'.")
 			return false;
 		}
 
 		if (!url.includes("http://") && !url.includes("https://")) {
-			parent.postMessage({
-				pluginMessage: {
-					type: "notify",
-					message: "Don't forget the protocol! Your URL needs to start with 'http://' or 'https://'."
-				}
-			}, "*");
-
+			post("notify", "Don't forget the protocol! Your URL needs to start with 'http://' or 'https://'.")
 			return false;
 		}
 
 		return true;
 	};
+
+	function post(type, message) {
+		parent.postMessage({
+			pluginMessage: {
+				type,
+				message
+			}
+		}, "*");
+	}
 
 	function openSettings() {
 		toggleClass(BUTTON_SETTINGS, "Active");
@@ -219,7 +241,7 @@
 
 		let iframeNode = document.createElement("iframe");
 
-		iframeNode.title = "Iframe loaded through Figma FrameBrowser";
+		iframeNode.title = "Iframe loaded through FrameBrowser";
 		iframeNode.width = width;
 		iframeNode.height = height;
 		iframeNode.src = url;
@@ -232,28 +254,25 @@
 	}
 
 	function toggleClass(node, cssClass) {
+		console.log(node, cssClass);
 		if (node && cssClass) {
+			console.log('xxxx')
 			node.classList.toggle(cssClass);
 			return;
 		}
 
+		post("notify", "Method 'toggleClass()' is missing either 'node' or 'cssClass' arguments!");
 		console.error("Method 'toggleClass()' is missing either 'node' or 'cssClass' arguments!");
-		alert("Method 'toggleClass()' is missing either 'node' or 'cssClass' arguments!");
 	}
 
-	BUTTON_RUN.onclick = async () => {
-		const URL = document.querySelector("#InputUrl").value;
+	async function run() {
+		const URL = INPUT.value;
 
 		if (validateUrl(URL)) {
-			const WIDTH = parseInt(document.querySelector("#InputWidth").value) || DEFAULT_WIDTH;
-			const HEIGHT = parseInt(document.querySelector("#InputHeight").value) || DEFAULT_HEIGHT;
+			const WIDTH = parseInt(INPUT_WIDTH.value) || DEFAULT_WIDTH;
+			const HEIGHT = parseInt(INPUT_HEIGHT.value) || DEFAULT_HEIGHT;
 			const ALLOW_SCROLLING = (() => {
-				const VALUE = document.querySelector("#InputScroll").checked;
-
-				if (VALUE === "on" || VALUE === true) {
-					return "yes";
-				}
-
+				if (INPUT_SCROLL.checked === "on" ||INPUT_SCROLL.checked === true) return "yes";
 				return "no";
 			})();
 
@@ -267,8 +286,37 @@
 
 			await createIframe(WIDTH, HEIGHT, URL, ALLOW_SCROLLING);
 			const IFRAME = document.querySelector(`#${IFRAME_ID}`);
-			toggleClass(BUTTON_SETTINGS, "Active");
-			toggleClass(SCREEN_SETTINGS, "DrawerActive");
+			close();
 		}
+	}
+
+	function close() {
+		toggleClass(BUTTON_SETTINGS, "Active");
+		toggleClass(SCREEN_SETTINGS, "DrawerActive");
+
+		// Only hide "Close" button when first opening
+		if (isFreshStart) {
+			isFreshStart = false;
+			setTimeout(() => {
+				toggleClass(BUTTON_CLOSE, "Hide");
+			}, 500)
+		}
+	}
+
+	/******************/
+	/* Event handling */
+	/******************/
+	INPUT.addEventListener('keyup', e => {
+		if (e.key === 'Enter') {
+			run();
+		}
+	});
+
+	BUTTON_RUN.onclick = async () => {
+		await run();
+	}
+
+	BUTTON_CLOSE.onclick = async () => {
+		close();
 	}
 </script>
