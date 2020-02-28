@@ -82,6 +82,10 @@
 		display: none;
 	}
 
+	.Invalid {
+		background-color: var(--color-red) !important;
+	}
+
 	/* Styling specific to ScreenSettings */
 	#ScreenSettings {
 		width: 100%;
@@ -192,7 +196,7 @@
 	</div>
 	<div class="Flex">
 		<div class="InputLarger">
-			<button type="submit" id="ButtonRun">Run</button>
+			<button type="submit" id="ButtonRun" class="Invalid">Run</button>
 		</div>
 		<div class="InputLarger">
 			<button type="submit" id="ButtonClose" class="Hide">Close</button>
@@ -221,15 +225,12 @@
 	/******************/
 	function validateUrl(url) {
 		if (!url || url === null || url === "") {
-			post("notify", "Please provide a valid URL beginning with 'http://' or 'https://'.")
+			post("notify", "Please provide a valid URL!");
+			BUTTON_RUN.classList.add("Invalid");
 			return false;
 		}
 
-		if (!url.includes("http://") && !url.includes("https://")) {
-			post("notify", "Don't forget the protocol! Your URL needs to start with 'http://' or 'https://'.")
-			return false;
-		}
-
+		BUTTON_RUN.classList.remove("Invalid");
 		return true;
 	};
 
@@ -282,7 +283,22 @@
 	}
 
 	async function loadContent() {
-		const URL = INPUT.value;
+		const URL = (() => {
+			const _URL = INPUT.value;
+
+			// Replace HTTP with HTTPS
+			if (_URL.includes("http://")) {
+				return _URL.replace("http://", "https://");
+			}
+
+			// Add HTTPS if missing
+			if (!_URL.includes("https://")) {
+				return `https://${_URL}`;
+			}
+
+			// Else return as-is
+			return _URL;
+		})();
 
 		if (validateUrl(URL)) {
 			const WIDTH = parseInt(INPUT_WIDTH.value) || DEFAULT_WIDTH;
@@ -318,6 +334,8 @@
 	/* Event handling */
 	/******************/
 	INPUT.addEventListener('keyup', async e => {
+		validateUrl(INPUT.value);
+
 		if (e.key === 'Enter') {
 			await loadContent();
 		}

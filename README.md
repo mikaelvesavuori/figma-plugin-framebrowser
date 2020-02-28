@@ -17,7 +17,7 @@ Please note that many sites don't allow embedding their content in iframes. This
 ## Using FrameBrowser
 
 - In Figma, under Plugins, click `FrameBrowser`
-- Give FrameBrowser a valid URL including its `http://` or `https://` protocol
+- Give FrameBrowser a valid URL including the `https://` protocol
 
 ![Framebrowser starting view](framebrowser-demo-1.jpg)
 _Framebrowser starting view_
